@@ -29,10 +29,8 @@ jobs:
     - name: Translate all ipynb files in nb/ to Chinese (zh-cn)
       run: |
         cd notebooks_CN
-        jupyter_translate --help
         mkdir -p nb_CN
-        echo "Executing command: jupyter_translate nb/ --target zh-CN --directory"
-        jupyter_translate nb/ --target zh-CN --directory
+        jupyter_translate nb --target chinese --directory
         find nb -name '*_zh-CN.ipynb' | while read file; do
           mv "$file" "nb_CN/$(basename "$file")"
         done
