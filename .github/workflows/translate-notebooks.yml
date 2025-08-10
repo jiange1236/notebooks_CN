@@ -47,7 +47,7 @@ jobs:
         find nb -name '*.ipynb' | while read file; do
           echo "Translating $file"
           python ../jupyter-translate/main.py -e ai "$file"
-          out_file="${file%.ipynb}_cn.ipynb"
+          out_file="${file%.ipynb}_zh.ipynb"
           mv "$out_file" "nb_CN/$(basename "$out_file")"
         done
 
