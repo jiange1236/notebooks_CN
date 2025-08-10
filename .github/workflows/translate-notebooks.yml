@@ -30,7 +30,7 @@ jobs:
       run: |
         cd notebooks_CN
         mkdir -p nb_CN
-        jupyter_translate nb --target zh-CN --directory
+        jupyter_translate nb/ --target zh-CN --directory
         find nb -name '*_zh-CN.ipynb' | while read file; do
           mv "$file" "nb_CN/$(basename "$file")"
         done
