@@ -1,0 +1,45 @@
+name: Translate Jupyter Notebooks
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'files/nb/**/*.ipynb'
+
+jobs:
+  translate-notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout notebooks_CN repo
+      uses: actions/checkout@v4
+      with:
+        repository: jiange1236/notebooks_CN
+        path: notebooks_CN
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install jupyter_translate
+      run: |
+        pip install jupyter_translate
+
+    - name: Translate all ipynb files in nb/ to Chinese (zh-cn)
+      run: |
+        cd notebooks_CN
+        mkdir -p nb_CN
+        jupyter_translate nb --target zh-cn --directory
+        find nb -name '*_zh-cn.ipynb' | while read file; do
+          mv "$file" "nb_CN/$(basename "$file")"
+        done
+
+    - name: Commit and push translated notebooks
+      run: |
+        cd notebooks_CN
+        git config user.name "${{ github.actor }}"
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
+        git add nb_CN/
+        git commit -m "Translated Jupyter notebooks to Chinese using jupyter_translate"
+        git push
