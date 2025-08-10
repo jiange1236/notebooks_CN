@@ -49,6 +49,7 @@ jobs:
           python ../jupyter-translate/main.py -e ai "$file"
           out_file="${file%.ipynb}_zh.ipynb"
           mv "$out_file" "nb_CN/$(basename "$out_file")"
+          sleep 5
         done
 
     - name: Commit and push translated notebooks
