@@ -42,10 +42,12 @@ jobs:
 
     - name: Translate all ipynb files
       run: |
+        cd notebooks_CN
         mkdir -p nb_CN
-        for file in nb/*.ipynb; do
-          python jupyter-translate/main.py -e ai "$file"
-          out_file="${file%.ipynb}_zh.ipynb"
+        find nb -name '*.ipynb' | while read file; do
+          echo "Translating $file"
+          python ../jupyter-translate/main.py -e ai "$file"
+          out_file="${file%.ipynb}_cn.ipynb"
           mv "$out_file" "nb_CN/$(basename "$out_file")"
         done
 
