@@ -1,0 +1,59 @@
+name: Translate Jupyter Notebooks
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'files/nb/**/*.ipynb'
+
+jobs:
+  translate-notebooks:
+    runs-on: ubuntu-latest
+
+    env:
+      BASE_URL: ${{ secrets.BASE_URL }}
+      MODEL_NAME: ${{ secrets.MODEL_NAME }}
+      API_KEY: ${{ secrets.API_KEY }}
+
+    steps:
+    - name: Checkout notebooks_CN repo
+      uses: actions/checkout@v4
+      with:
+        repository: jiange1236/notebooks_CN
+        path: notebooks_CN
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Clone jupyter-translate
+      run: |
+        git clone https://github.com/jexonn/jupyter-translate.git
+        cd jupyter-translate
+        pip install -r requirements.txt
+
+    - name: Prepare config.ini
+      run: |
+        cp jupyter-translate/config.ini.example jupyter-translate/config.ini
+        sed -i "s|base_url = .*|base_url = $BASE_URL|" jupyter-translate/config.ini
+        sed -i "s|model_name = .*|model_name = $MODEL_NAME|" jupyter-translate/config.ini
+        sed -i "s|api_key = .*|api_key = $API_KEY|" jupyter-translate/config.ini
+
+    - name: Translate all ipynb files
+      run: |
+        mkdir -p nb_CN
+        for file in nb/*.ipynb; do
+          python jupyter-translate/main.py -e ai "$file"
+          out_file="${file%.ipynb}_zh.ipynb"
+          mv "$out_file" "nb_CN/$(basename "$out_file")"
+        done
+
+    - name: Commit and push translated notebooks
+      run: |
+        cd notebooks_CN
+        git config user.name "${{ github.actor }}"
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
+        git add nb_CN/
+        git commit -m "Translated Jupyter notebooks to Chinese using AI model"
+        git push
