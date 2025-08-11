@@ -30,9 +30,24 @@ jobs:
       run: |
         cd notebooks_CN
         mkdir -p nb_CN
-        jupyter_translate nb --target chinese --directory
-        find nb -name '*_zh-CN.ipynb' | while read file; do
-          mv "$file" "nb_CN/$(basename "$file")"
+
+        find nb -name '*.ipynb' | while read -r file; do
+          jupyter_translate "$file" --target chinese || {
+            echo "!!! Translation failed for $file. Skipping this file. !!!"
+            continue
+          }
+          # 检查翻译后的文件是否存在，并移动
+          # jupyter_translate 默认会在源文件同级目录创建新文件，文件名格式为 original_name_target_lang.ipynb
+          translated_file="${file%.ipynb}_zh-CN.ipynb"
+          if [ -f "$translated_file" ]; then
+            # 确保目标目录存在，如果不存在 mkdir -p 会创建
+            mv "$translated_file" "nb_CN/$(basename "$translated_file")"
+            echo "Successfully translated and moved: $(basename "$translated_file") to nb_CN/"
+          else
+            echo "WARNING: Translated file $translated_file not found after translation for $file. This might indicate a partial failure or unexpected output from jupyter_translate, even if it didn't return an error code."
+          fi
+          echo "--- Finished processing: $file ---"
+          echo "" # 添加空行以提高日志可读性
         done
 
     - name: Commit and push translated notebooks
@@ -41,5 +56,10 @@ jobs:
         git config user.name "${{ github.actor }}"
         git config user.email "${{ github.actor }}@users.noreply.github.com"
         git add nb_CN/
-        git commit -m "Translated Jupyter notebooks to Chinese using jupyter_translate"
-        git push
+        # 检查是否有文件需要提交，避免在没有更改时提交空提交
+        if git diff --staged --exit-code; then # 使用 --staged 检查暂存区
+          echo "No changes to commit in nb_CN/."
+        else
+          git commit -m "Translated Jupyter notebooks to Chinese using jupyter_translate"
+          git push
+        fi
